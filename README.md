@@ -1,2 +1,4 @@
-# cBioPortal_validation_strategy
+# cbioportal_validation_prototype
 MSc Thesis (Minor Project) - The Hyve
+
+

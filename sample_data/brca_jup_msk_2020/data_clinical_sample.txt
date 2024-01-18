@@ -1,0 +1,10 @@
+#Patient_ID	Sample_ID	Tumor_size	Grade	ER	HER2	Oncotree Code	Cancer Type	Cancer Type Detailed	TMB (nonsynonymous)
+#Patient_ID	Sample_ID	Tumor_size_in_centimeters	GRADE	ER	HER2	Oncotree Code	Cancer Type	Cancer Type Detailed	TMB (nonsynonymous)
+#STRING	STRING	NUMBER	NUMBER	STRING	STRING	STRING	STRING	STRING	NUMBER
+#1	1	1	1	1	1	1	1	1	1
+PATIENT_ID	SAMPLE_ID	TUMOR_SIZE	GRADE	ER	HER2	ONCOTREE_CODE	CANCER_TYPE	CANCER_TYPE_DETAILED	TMB_NONSYNONYMOUS
+JuP1	JuP1	NA	NA	NA	NA	BRCA	Breast Cancer	Invasive Breast Carcinoma	0.2
+JuP2	JuP2	NA	NA	NA	NA	BRCA	Breast Cancer	Invasive Breast Carcinoma	0.6
+JuP3	JuP3-JP	NA	NA	NA	NA	BRCA	Breast Cancer	Invasive Breast Carcinoma	0.1
+JuP3	JuP3-DCIS	NA	2	+	NA	BRCA	Breast Cancer	Invasive Breast Carcinoma	1.4
+JuP3	JuP3-IDC	1.5	2	+	-	BRCA	Breast Cancer	Invasive Breast Carcinoma	1.166666667

@@ -1,50 +1,45 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 # import required packages 
 import pandas as pd
 import numpy as np
 from copy import deepcopy
+import re
 import pandera as pa
-from pandera import Check, Column, DataFrameSchema
+from pandera import Check, Column, DataFrameSchema, Index, MultiIndex
+from pandera.errors import SchemaError
 
-# Read mutations data into pandas dataframe
-mut_data = pd.read_csv(os.path.join(file_dir, "data_mutations.txt"), sep='\t', comment='#', header=0)
-mut_data_copy = deepcopy(mut_data)
+# # Read mutations data into pandas dataframe
+# mut_data = pd.read_csv(os.path.join(file_dir, "data_mutations.txt"), sep='\t', comment='#', header=0)
+# mut_data_copy = deepcopy(mut_data)
 
-# Save basic statistics
-no_of_features = len(mut_data.columns) # contains 112 columns 
-no_of_genes = len(mut_data.index) # contains 11660 rows 
+# # Save basic statistics
+# no_of_features = len(mut_data.columns) # contains 112 columns 
+# no_of_genes = len(mut_data.index) # contains 11660 rows 
 
-# Pre-processing steps 
-# Replace all empty values with None/NaN (Pandera does not consider empty strings as missing data)
-# mut_data = mut_data.replace('', pd.NA)
+# # Pre-processing steps 
+# # Replace all empty values with None/NaN (Pandera does not consider empty strings as missing data)
+# # mut_data = mut_data.replace('', pd.NA)
 
-def detect_and_replace_missing_values(df):
-    # Defining the list of missing values (in lower case) for each datatype
-    missing_strings = ['unknown', 'n/a', 'na', 'null', '.', '', '?', '[not available]']
-    missing_numbers = [0, 0.0] # Add any dataset-specific missing numbers
+# def detect_and_replace_missing_values(df):
+#     # Defining the list of missing values (in lower case) for each datatype
+#     missing_strings = ['unknown', 'n/a', 'na', 'null', '.', '', '?', '[not available]']
+#     missing_numbers = [0, 0.0] # Add any dataset-specific missing numbers
 
-    for col in df.columns:
-        if df[col].dtype == object:  # if the column is of object type
-            df.loc[df[col].str.lower().isin(missing_strings), col] = pd.NA
-        elif df[col].dtype in [int, np.int64, float, np.float64]:  # if the column is of numeric type
-            df.loc[df[col].isin(missing_numbers), col] = pd.NA
+#     for col in df.columns:
+#         if df[col].dtype == object:  # if the column is of object type
+#             df.loc[df[col].str.lower().isin(missing_strings), col] = pd.NA
+#         elif df[col].dtype in [int, np.int64, float, np.float64]:  # if the column is of numeric type
+#             df.loc[df[col].isin(missing_numbers), col] = pd.NA
 
-    return df
+#     return df
 
-# Usage:
-mut_data = detect_and_replace_missing_values(mut_data)
+# # Usage:
+# mut_data = detect_and_replace_missing_values(mut_data)
 
 # Drop columns with all missing values
 # mut_data.dropna(axis=1, how='all', inplace=True)
-
-
-# In[ ]:
-
 
 # Use Pandera for initial validation and data cleaning (table-wide and column-specific checks)
 """Initial validation may include:
@@ -53,10 +48,6 @@ mut_data = detect_and_replace_missing_values(mut_data)
     - Removing duplicates 
     - Defining column order 
     """
-
-import pandera as pa
-from pandera import DataFrameSchema, Column, Check, Index, MultiIndex
-import regex as re
 
 # Set up lists of columns/values that need to be checked for or validated against.
 REQUIRED_HEADERS = [
@@ -68,6 +59,17 @@ REQUIRED_HEADERS = [
 NULL_AA_CHANGE_VALUES = ('', 'NULL', 'NA')
 
 EXTRA_VARIANT_CLASSIFICATION_VALUES = ['Splice_Region', 'Fusion']
+
+SKIP_VARIANT_TYPES = [
+    'Silent',
+    'Intron',
+    '3\'UTR',
+    '3\'Flank',
+    '5\'UTR',
+    '5\'Flank',
+    'IGR',
+    'RNA'
+]
 
 VARIANT_CLASSIFICATION_VALUES = [
        'Frame_Shift_Del',
@@ -94,6 +96,7 @@ REQUIRED_ASCN_COLUMNS = [
     'ASCN.CLONAL',
     'ASCN.EXPECTED_ALT_COPIES'
 ]
+
 
 # Define custom functions for checks that are not built-in 
 # Table-wide custom checks
@@ -133,7 +136,7 @@ def ascn_namespace_defined(df):
                         return False
     return True
 
-schema = DataFrameSchema(
+mut_schema = DataFrameSchema(
     columns={
         "Hugo_Symbol": Column(
             dtype="object",
@@ -568,21 +571,15 @@ schema = DataFrameSchema(
     description=None,
 )
 
+# # Validated data against schema
+# try: 
+#     mut_schema.validate(mut_data, lazy=True)
+# except pa.errors.SchemaErrors as err:
+#     failure_cases = err.failure_cases
+#     error_df = err.data
 
-# In[ ]:
-
-
-from pandera.errors import SchemaError
-
-# Validated data against schema
-try: 
-    schema.validate(mut_data, lazy=True)
-except pa.errors.SchemaErrors as err:
-    failure_cases = err.failure_cases
-    error_df = err.data
-
-failure_cases_sorted = failure_cases.sort_values(by=['schema_context','column', 'index']).reset_index()
-# failure_cases_grouped = failure_cases_sorted.groupby(['column','check','schema_context'])['failure_case','index'].agg(list).reset_index()
-failure_cases_sorted.to_csv("prototype/pandera/failure_cases.txt", sep = "\t")
-error_df.to_csv("prototype/pandera/errors.txt", sep = "\t")
+# failure_cases_sorted = failure_cases.sort_values(by=['schema_context','column', 'index']).reset_index()
+# # failure_cases_grouped = failure_cases_sorted.groupby(['column','check','schema_context'])['failure_case','index'].agg(list).reset_index()
+# failure_cases_sorted.to_csv("prototype/pandera/failure_cases.txt", sep = "\t")
+# error_df.to_csv("prototype/pandera/errors.txt", sep = "\t")
 

@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
-
 import json 
+import pandas as pd
+from pydantic import BaseModel, ValidationError, validator, root_validator
+from typing import Optional
+import re
+import warnings
+import requests
 
 # Read the gene table into a dataframe 
 genes_api = pd.read_json('http://cbioportal.org/api/genes')
@@ -12,16 +15,7 @@ genes_api = pd.read_json('http://cbioportal.org/api/genes')
 # Read the chromosome JSON
 chrom_sizes = {"hg19": {"1": 249250621, "2": 243199373, "3": 198022430, "4": 191154276, "5": 180915260, "6": 171115067, "7": 159138663, "X": 155270560, "8": 146364022, "9": 141213431, "10": 135534747, "11": 135006516, "12": 133851895, "13": 115169878, "14": 107349540, "15": 102531392, "16": 90354753, "17": 81195210, "18": 78077248, "20": 63025520, "Y": 59373566, "19": 59128983, "22": 51304566, "21": 48129895}, "hg38": {"1": 248956422, "2": 242193529, "3": 198295559, "4": 190214555, "5": 181538259, "6": 170805979, "7": 159345973, "X": 156040895, "8": 145138636, "9": 138394717, "11": 135086622, "10": 133797422, "12": 133275309, "13": 114364328, "14": 107043718, "15": 101991189, "16": 90338345, "17": 83257441, "18": 80373285, "20": 64444167, "19": 58617616, "Y": 57227415, "22": 50818468, "21": 46709983}, "mm10": {"1": 195471971, "2": 182113224, "X": 171031299, "3": 160039680, "4": 156508116, "5": 151834684, "6": 149736546, "7": 145441459, "10": 130694993, "8": 129401213, "14": 124902244, "9": 124595110, "11": 122082543, "13": 120421639, "12": 120129022, "15": 104043685, "16": 98207768, "17": 94987271, "Y": 91744698, "18": 90702639, "19": 61431566}}
 
-
-# In[ ]:
-
-
 # Use Pydantic to perform in-depth validation on individual rows 
-from pydantic import BaseModel, ValidationError, validator, root_validator
-from typing import Optional
-import pydantic
-import warnings
-import requests
 # Objects are defined via models in Pydantic
 # Models are classes that inherit from the BaseModel
 
@@ -31,7 +25,6 @@ def keys_exist(values, keys):
         if key not in values or values[key] is None:
             return False
     return True
-
 
 '''
 # To check the alias table
@@ -44,32 +37,33 @@ def check_gene_alias(v):
 
 class MutData(BaseModel):
     Hugo_Symbol: str 
-    Entrez_Gene_Id: float | None
-    NCBI_Build: str | None
-    Chromosome: str | None
-    Start_Position: int | None
-    End_Position: int | None
+#    Entrez_Gene_Id: float | None
+    Entrez_Gene_Id: Optional[float] = None
+    NCBI_Build: Optional[str] = None
+    Chromosome: Optional[str] = None
+    Start_Position: Optional[int] = None
+    End_Position: Optional[int] = None
     Variant_Classification: str
-    Variant_Type: str | None
-    Reference_Allele: str | None
-    Tumor_Seq_Allele1: str | None
-    Tumor_Seq_Allele2: str | None
+    Variant_Type: Optional[str] = None
+    Reference_Allele: Optional[str] = None
+    Tumor_Seq_Allele1: Optional[str] = None
+    Tumor_Seq_Allele2: Optional[str] = None
     Tumor_Sample_Barcode: str
-    Matched_Norm_Sample_Barcode: str | None
-    Tumor_Validation_Allele1: str | None
-    Tumor_Validation_Allele2: str | None
-    Match_Norm_Validation_Allele1: str | None
-    Match_Norm_Validation_Allele2: str | None
-    Verification_Status: str | None
-    Validation_Status: str | None
-    Mutation_Status: str | None
-    Validation_Method: str | None
-    t_ref_count: int | None
-    t_alt_count: int | None
-    n_ref_count: int | None
-    n_alt_count: int | None
-    HGVSp_Short: str | None
-    SWISSPROT: str | None
+    Matched_Norm_Sample_Barcode: Optional[str] = None
+    Tumor_Validation_Allele1: Optional[str] = None
+    Tumor_Validation_Allele2: Optional[str] = None
+    Match_Norm_Validation_Allele1: Optional[str] = None
+    Match_Norm_Validation_Allele2: Optional[str] = None
+    Verification_Status: Optional[str] = None
+    Validation_Status: Optional[str] = None
+    Mutation_Status: Optional[str] = None
+    Validation_Method: Optional[str] = None
+    t_ref_count: Optional[int] = None
+    t_alt_count: Optional[int] = None
+    n_ref_count: Optional[int] = None
+    n_alt_count: Optional[int] = None
+    HGVSp_Short: Optional[str] = None
+    SWISSPROT: Optional[str] = None
         
     # Custom validation can be carried out using the "validator" decorator
     """Since a validator works as a class method, the first argument is the 
@@ -366,16 +360,12 @@ class MutData(BaseModel):
         return values
     
 
-
-# In[ ]:
-
-
 # print(MutData.schema_json(indent=2))
 # add 1 (or no. of header lines) to the row no (idx) to get the line number 
-with open("prototype/pydantic/errors.txt", "w") as file:
-    for idx, row in mut_data.iterrows():
-        try:
-            MutData(**row.to_dict())
-        except ValidationError as e:
-            file.write(f'Error in row {idx}: {e}\n\n')
+# with open("errors/pydantic/errors.txt", "w") as file:
+#     for idx, row in mut_data.iterrows():
+#         try:
+#             MutData(**row.to_dict())
+#         except ValidationError as e:
+#             file.write(f'Error in row {idx}: {e}\n\n')
 

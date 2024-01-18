@@ -1,0 +1,5 @@
+regex
+cerberus
+pandas
+pandera[io] 
+pydantic 
